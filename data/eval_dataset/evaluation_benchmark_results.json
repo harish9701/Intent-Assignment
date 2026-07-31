@@ -1,0 +1,10 @@
+{
+  "_documentation": {
+    "description": "Exported evaluation benchmark result matrix for held-out test set and seeded divergence cases.",
+    "usage": "Stores evaluated accuracy, scope recall, over-permissioning rates, and ECE calibration statistics across baseline, statistical ML, and hybrid models.",
+    "status": "Pending execution. Run python -m src.evaluation.run_benchmark to populate live results."
+  },
+  "primary_track_models": {},
+  "secondary_track_divergence": {},
+  "hard_gates_summary": {}
+}

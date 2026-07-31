@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "intent-manifest-inference"
+version = "1.0.0"
+description = "AI/ML models for Intent Manifest Inference and Intent Divergence Detection in Agentic Access Governance"
+authors = [{ name = "AI Research Team" }]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.22.0",
+    "scikit-learn>=1.0.0",
+    "pandas>=1.4.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "jupyter>=1.0.0"
+]

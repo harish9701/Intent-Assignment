@@ -1,0 +1,213 @@
+{
+  "_documentation": {
+    "description": "Mock Enterprise Identity Governance and Administration (IGA) database in SailPoint format.",
+    "usage": "Demonstrates enterprise human identity governance integration (User identities, Manager hierarchy, Application registry, and IAM Entitlements).",
+    "required": "Optional reference data for enterprise IAM integration."
+  },
+  "identities": [
+    {
+      "id": "USR-101",
+      "username": "alice.smith",
+      "fullName": "Alice Smith",
+      "department": "Finance",
+      "title": "Senior Financial Analyst",
+      "managerId": "USR-100",
+      "status": "ACTIVE",
+      "riskScore": 25,
+      "email": "alice.smith@company.com"
+    },
+    {
+      "id": "USR-102",
+      "username": "bob.jones",
+      "fullName": "Bob Jones",
+      "department": "Engineering",
+      "title": "DevOps Engineer",
+      "managerId": "USR-104",
+      "status": "ACTIVE",
+      "riskScore": 40,
+      "email": "bob.jones@company.com"
+    },
+    {
+      "id": "USR-103",
+      "username": "charlie.brown",
+      "fullName": "Charlie Brown",
+      "department": "Human Resources",
+      "title": "HR Generalist",
+      "managerId": "USR-105",
+      "status": "ACTIVE",
+      "riskScore": 15,
+      "email": "charlie.brown@company.com"
+    },
+    {
+      "id": "USR-104",
+      "username": "diana.prince",
+      "fullName": "Diana Prince",
+      "department": "Engineering",
+      "title": "VP of Infrastructure",
+      "managerId": "USR-100",
+      "status": "ACTIVE",
+      "riskScore": 75,
+      "email": "diana.prince@company.com"
+    },
+    {
+      "id": "USR-105",
+      "username": "edward.norton",
+      "fullName": "Edward Norton",
+      "department": "Human Resources",
+      "title": "Director of People Ops",
+      "managerId": "USR-100",
+      "status": "ACTIVE",
+      "riskScore": 30,
+      "email": "edward.norton@company.com"
+    },
+    {
+      "id": "USR-100",
+      "username": "sarah.connor",
+      "fullName": "Sarah Connor",
+      "department": "Executive",
+      "title": "Chief Information Officer",
+      "managerId": null,
+      "status": "ACTIVE",
+      "riskScore": 90,
+      "email": "sarah.connor@company.com"
+    }
+  ],
+  "applications": [
+    {
+      "id": "APP-SAP",
+      "name": "SAP ERP Financials",
+      "category": "Enterprise Resource Planning",
+      "criticality": "HIGH",
+      "owner": "Finance Governance"
+    },
+    {
+      "id": "APP-AWS",
+      "name": "AWS Production Cloud",
+      "category": "Cloud Infrastructure",
+      "criticality": "CRITICAL",
+      "owner": "Cloud Security Team"
+    },
+    {
+      "id": "APP-SFDC",
+      "name": "Salesforce CRM",
+      "category": "Customer Relationship",
+      "criticality": "MEDIUM",
+      "owner": "Sales Ops"
+    },
+    {
+      "id": "APP-HRDB",
+      "name": "Workday Confidential HR DB",
+      "category": "Human Capital Management",
+      "criticality": "HIGH",
+      "owner": "HR Operations"
+    }
+  ],
+  "entitlements": [
+    {
+      "id": "ENT-SAP-PO-CREATE",
+      "appId": "APP-SAP",
+      "name": "Purchase Order Creator",
+      "code": "SAP_FI_PO_CREATE",
+      "description": "Allows user to create purchase orders up to $50,000",
+      "riskLevel": "MEDIUM"
+    },
+    {
+      "id": "ENT-SAP-PO-APPROVE",
+      "appId": "APP-SAP",
+      "name": "Purchase Order Approver",
+      "code": "SAP_FI_PO_APPROVE",
+      "description": "Allows user to approve purchase orders and authorize payments",
+      "riskLevel": "HIGH"
+    },
+    {
+      "id": "ENT-SAP-AP-VIEW",
+      "appId": "APP-SAP",
+      "name": "Accounts Payable Viewer",
+      "code": "SAP_FI_AP_VIEW",
+      "description": "Read-only access to AP ledgers and vendor details",
+      "riskLevel": "LOW"
+    },
+    {
+      "id": "ENT-AWS-PROD-ADMIN",
+      "appId": "APP-AWS",
+      "name": "AWS Production SysAdmin",
+      "code": "AWS_IAM_PROD_ADMIN",
+      "description": "Full administrative permissions on production AWS accounts",
+      "riskLevel": "CRITICAL"
+    },
+    {
+      "id": "ENT-AWS-READONLY",
+      "appId": "APP-AWS",
+      "name": "AWS Infrastructure Viewer",
+      "code": "AWS_IAM_READONLY",
+      "description": "Read-only monitoring access to EC2, S3, and CloudWatch",
+      "riskLevel": "LOW"
+    },
+    {
+      "id": "ENT-HR-PAYROLL-EDIT",
+      "appId": "APP-HRDB",
+      "name": "Payroll Records Editor",
+      "code": "HR_PAYROLL_EDIT",
+      "description": "Ability to modify employee salary, direct deposit, and bonuses",
+      "riskLevel": "HIGH"
+    },
+    {
+      "id": "ENT-HR-VIEWER",
+      "appId": "APP-HRDB",
+      "name": "HR Employee Directory Viewer",
+      "code": "HR_DIRECTORY_VIEW",
+      "description": "General employee lookup and organizational chart viewer",
+      "riskLevel": "LOW"
+    }
+  ],
+  "userEntitlements": [
+    {
+      "userId": "USR-101",
+      "entitlementId": "ENT-SAP-PO-CREATE",
+      "grantedDate": "2025-01-15",
+      "grantedBy": "USR-100"
+    },
+    {
+      "userId": "USR-101",
+      "entitlementId": "ENT-SAP-AP-VIEW",
+      "grantedDate": "2025-02-01",
+      "grantedBy": "USR-100"
+    },
+    {
+      "userId": "USR-102",
+      "entitlementId": "ENT-AWS-READONLY",
+      "grantedDate": "2025-03-10",
+      "grantedBy": "USR-104"
+    },
+    {
+      "userId": "USR-104",
+      "entitlementId": "ENT-AWS-PROD-ADMIN",
+      "grantedDate": "2024-08-01",
+      "grantedBy": "USR-100"
+    },
+    {
+      "userId": "USR-103",
+      "entitlementId": "ENT-HR-VIEWER",
+      "grantedDate": "2025-04-12",
+      "grantedBy": "USR-105"
+    }
+  ],
+  "sodPolicies": [
+    {
+      "id": "SOD-POL-101",
+      "name": "PO Creator vs PO Approver Conflict",
+      "description": "Segregation of Duties conflict: The same user cannot create purchase orders and approve purchase orders.",
+      "conflictingEntitlements": ["ENT-SAP-PO-CREATE", "ENT-SAP-PO-APPROVE"],
+      "severity": "HIGH",
+      "complianceFramework": "SOX Section 404"
+    },
+    {
+      "id": "SOD-POL-102",
+      "name": "DevOps vs Production SysAdmin Separation",
+      "description": "Developers who write code cannot hold unmonitored AWS Production SysAdmin rights without explicit security officer approval.",
+      "conflictingEntitlements": ["ENT-AWS-PROD-ADMIN", "ENT-HR-PAYROLL-EDIT"],
+      "severity": "CRITICAL",
+      "complianceFramework": "ISO 27001 / SOC2 Type II"
+    }
+  ]
+}
