@@ -16,14 +16,18 @@ if SYS_BASE not in sys.path:
 from src.models.baseline_frequency import FrequencyBaselineModel
 from src.models.statistical_ml import StatisticalPatternModel
 from src.models.llm_hybrid import LLMHybridManifestModel
+from src.models.ollama_llm import OllamaLLMManifestModel
 from src.divergence.intent_divergence import IntentDivergenceEngine
+from src.manifest.dynamic_manifest import DynamicManifestBoundaryEnforcer
 
 BENCHMARK_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "benchmark_results.json")
 
 model_baseline = FrequencyBaselineModel()
 model_statml = StatisticalPatternModel()
 model_hybrid = LLMHybridManifestModel()
+model_ollama = OllamaLLMManifestModel()
 divergence_engine = IntentDivergenceEngine()
+boundary_enforcer = DynamicManifestBoundaryEnforcer()
 
 class ModelInferenceRequestHandler(BaseHTTPRequestHandler):
     def _send_json(self, data, status_code=200):
@@ -44,7 +48,7 @@ class ModelInferenceRequestHandler(BaseHTTPRequestHandler):
             else:
                 self._send_json({"error": "Benchmark data not generated yet."}, status_code=404)
         else:
-            self._send_json({"message": "Intent Manifest Inference ML API Active. Use /api/infer-manifest or /api/analyze-divergence."})
+            self._send_json({"message": "Intent Manifest Inference ML API Active. Use /api/infer-manifest, /api/analyze-divergence, or /api/enforce-boundary."})
 
     def do_POST(self):
         parsed = urlparse(self.path)
@@ -65,6 +69,8 @@ class ModelInferenceRequestHandler(BaseHTTPRequestHandler):
                 res = model_baseline.predict_manifest(trace_data)
             elif model_type == "statml":
                 res = model_statml.predict_manifest(trace_data)
+            elif model_type == "ollama":
+                res = model_ollama.predict_manifest(trace_data)
             else:
                 res = model_hybrid.predict_manifest(trace_data)
                 
@@ -73,9 +79,16 @@ class ModelInferenceRequestHandler(BaseHTTPRequestHandler):
         elif parsed.path == '/api/analyze-divergence':
             res = divergence_engine.analyze_triplet(body)
             self._send_json(res)
+
+        elif parsed.path == '/api/enforce-boundary':
+            manifest = body.get("manifest", {})
+            tool_call = body.get("tool_call", {})
+            decision = boundary_enforcer.enforce_boundary(manifest, tool_call)
+            self._send_json(decision.to_dict())
             
         else:
             self._send_json({"error": "Not Found"}, status_code=404)
+
 
 def run_server(port=8000):
     server_address = ('', port)

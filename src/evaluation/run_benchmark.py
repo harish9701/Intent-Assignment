@@ -11,6 +11,7 @@ from typing import Dict, Any, List
 from src.models.baseline_frequency import FrequencyBaselineModel
 from src.models.statistical_ml import StatisticalPatternModel
 from src.models.llm_hybrid import LLMHybridManifestModel
+from src.models.ollama_llm import OllamaLLMManifestModel
 from src.divergence.intent_divergence import IntentDivergenceEngine
 from src.evaluation.harness import EvaluationHarness
 
@@ -43,8 +44,9 @@ def run_benchmark():
     model_stat_ml.fit(train_traces)
 
     model_llm_hybrid = LLMHybridManifestModel()
+    model_ollama = OllamaLLMManifestModel()
 
-    models = [baseline_model, model_stat_ml, model_llm_hybrid]
+    models = [baseline_model, model_stat_ml, model_llm_hybrid, model_ollama]
     harness = EvaluationHarness()
 
     results_primary = {}
@@ -58,7 +60,7 @@ def run_benchmark():
 
     baseline_res = results_primary[baseline_model.name]
     
-    header = f"{'Metric':<32} | {'Baseline (Freq)':<16} | {'Model 1 (StatML)':<16} | {'Model 2 (LLM-Hyb)':<16}"
+    header = f"{'Metric':<30} | {'Baseline (Freq)':<15} | {'Model 1 (StatML)':<15} | {'Model 2 (LLM-Hyb)':<15} | {'Model 3 (Ollama)':<15}"
     print(header)
     print("-" * len(header))
 
@@ -80,12 +82,15 @@ def run_benchmark():
         b_val = baseline_res[key]
         m1_val = results_primary[model_stat_ml.name][key]
         m2_val = results_primary[model_llm_hybrid.name][key]
+        m3_val = results_primary[model_ollama.name][key]
 
         b_str = f"{b_val:.4f}" if isinstance(b_val, float) else str(b_val)
         m1_str = f"{m1_val:.4f}" if isinstance(m1_val, float) else str(m1_val)
         m2_str = f"{m2_val:.4f}" if isinstance(m2_val, float) else str(m2_val)
+        m3_str = f"{m3_val:.4f}" if isinstance(m3_val, float) else str(m3_val)
 
-        print(f"{label:<32} | {b_str:<16} | {m1_str:<16} | {m2_str:<16}")
+        print(f"{label:<30} | {b_str:<15} | {m1_str:<15} | {m2_str:<15} | {m3_str:<15}")
+
 
     print("\n" + "-" * 80)
     print(" SECONDARY TRACK: INTENT DIVERGENCE DETECTION BENCHMARK ")

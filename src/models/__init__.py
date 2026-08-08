@@ -8,9 +8,12 @@ Contains Candidate Model implementations:
 from src.models.baseline_frequency import FrequencyBaselineModel
 from src.models.statistical_ml import StatisticalPatternModel
 from src.models.llm_hybrid import LLMHybridManifestModel
+from src.models.ollama_llm import OllamaLLMManifestModel
 
 __all__ = [
     "FrequencyBaselineModel",
     "StatisticalPatternModel",
-    "LLMHybridManifestModel"
+    "LLMHybridManifestModel",
+    "OllamaLLMManifestModel"
 ]
+

@@ -51,10 +51,29 @@ An **Intent Manifest** is a cryptographically signed envelope specifying:
 - **Parametric Quantile Mining**: Infers exact upper-bound `maxRecords` constraints and synthesizes parameter regex patterns (`^[A-Z][0-9]+$`).
 - **Bayesian Confidence Calibration**: Computes field-level confidence scores $C \in [0.85, 0.98]$ matching empirical correctness probabilities, achieving Expected Calibration Error (ECE) = **0.0300**.
 
-### 2. Triplet Divergence Engine (`src/divergence/intent_divergence.py`)
+### 2. Ollama Local LLM Extractor (`src/models/ollama_llm.py`)
+- **Local Open-Weights Integration**: Connects to local Ollama HTTP service (`http://localhost:11434`), supporting open models like `llama3`, `mistral`, `qwen2`, or `phi3`.
+- **Zero-Shot JSON Extraction**: Passes agent trace contexts directly into structured JSON extraction prompts.
+- **Offline Fallback Architecture**: Automatically degrades to local schema extraction if the Ollama daemon is offline, guaranteeing deterministic CI/CD execution.
+
+### 3. Dynamic Manifest Boundary Engine (`src/manifest/dynamic_manifest.py`)
+- **Active Runtime Boundary Enforcer**: Intercepts every proposed agent tool call at runtime, serving as a Policy Enforcement Point (PEP) and Policy Decision Point (PDP).
+- **8-Dimension Policy Evaluation**: Evaluates proposed tool executions against:
+  1. `scope.tools` (Authorized tool whitelist)
+  2. `scope.resources` (Canonical ARN & wildcard prefix matching)
+  3. `scope.actions` (Permitted API operation whitelist)
+  4. `constraints.maxRecords` (Upper-bound record retrieval limit ceiling)
+  5. `constraints.allowedCustomerIdPattern` (Regex pattern validation on target parameters)
+  6. `constraints.allowPagination` (Offset/continuation control)
+  7. `dataHandling.maxClassification` (Data sensitivity ceiling enforcement)
+  8. `dataHandling.allowExport` (Exfiltration & dump tool prevention)
+- **Machine-Readable Audit Trail**: Returns structured decisions (`PERMITTED`, `DENIED_PARAM_LIMIT_EXCEEDED`, `DENIED_PATTERN_MISMATCH`, `DENIED_EXFILTRATION_PREVENTED`).
+
+### 4. Triplet Divergence Engine (`src/divergence/intent_divergence.py`)
 - **Anchor View**: Observed behavior is treated as the ground truth anchor.
 - **Synonym Equivalence Mapper**: Normalizes action verbs (`retrieve`, `fetch`, `look up`, `query`) to `READ_VIEW` to prevent benign paraphrase false alarms (**0.00% FPR**).
 - **Escalation & Drift Detection**: Detects parameter target swapping (`C1001` $\rightarrow$ `C2999` or `*`), action escalation (`read` $\rightarrow$ `export` or `delete`), and privilege escalation parameters (**95.00% Injection Recall**).
+
 
 ---
 
