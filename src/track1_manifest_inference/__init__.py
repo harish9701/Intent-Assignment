@@ -1,6 +1,10 @@
 """
-Primary Track 1 Package Alias for Backward Compatibility.
-Imports from src.track1_manifest_inference.
+Primary Track 1: Intent Manifest Inference Package.
+Contains Candidate Models:
+- FrequencyBaselineModel (Baseline heuristic)
+- StatisticalPatternModel (Model 1: Statistical Pattern Miner)
+- LLMHybridManifestModel (Model 2: Hybrid Semantic Extractor - Recommended)
+- OllamaLLMManifestModel (Model 3: Local Open-Weights LLM)
 """
 from src.track1_manifest_inference.baseline_frequency import FrequencyBaselineModel
 from src.track1_manifest_inference.statistical_ml import StatisticalPatternModel

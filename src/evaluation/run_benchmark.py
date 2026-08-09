@@ -8,11 +8,11 @@ import json
 import numpy as np
 from typing import Dict, Any, List
 
-from src.models.baseline_frequency import FrequencyBaselineModel
-from src.models.statistical_ml import StatisticalPatternModel
-from src.models.llm_hybrid import LLMHybridManifestModel
-from src.models.ollama_llm import OllamaLLMManifestModel
-from src.divergence.intent_divergence import IntentDivergenceEngine
+from src.track1_manifest_inference.baseline_frequency import FrequencyBaselineModel
+from src.track1_manifest_inference.statistical_ml import StatisticalPatternModel
+from src.track1_manifest_inference.llm_hybrid import LLMHybridManifestModel
+from src.track1_manifest_inference.ollama_llm import OllamaLLMManifestModel
+from src.track2_intent_divergence.intent_divergence import IntentDivergenceEngine
 from src.evaluation.harness import EvaluationHarness
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data")

@@ -1,6 +1,7 @@
 """
-Secondary Track 2 Package Alias for Backward Compatibility.
-Imports from src.track2_intent_divergence.
+Secondary Track 2: Intent Divergence Package.
+Contains Triplet Divergence Detection Engine:
+- IntentDivergenceEngine
 """
 from src.track2_intent_divergence.intent_divergence import IntentDivergenceEngine
 
