@@ -171,7 +171,7 @@
           "sample_count": 40
         }
       ],
-      "avg_latency_ms": 0.61,
+      "avg_latency_ms": 0.57,
       "cost_per_manifest_usd": 0.0
     },
     "LLM_Hybrid_Semantic_Extractor": {
@@ -255,7 +255,7 @@
           "sample_count": 80
         }
       ],
-      "avg_latency_ms": 0.0,
+      "avg_latency_ms": 0.01,
       "cost_per_manifest_usd": 0.0004
     },
     "Ollama_LLM_llama3": {
@@ -339,7 +339,7 @@
           "sample_count": 80
         }
       ],
-      "avg_latency_ms": 4017.77,
+      "avg_latency_ms": 4015.95,
       "cost_per_manifest_usd": 0.0004
     }
   },
