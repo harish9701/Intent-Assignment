@@ -20,7 +20,6 @@ Intent-Assignment/
 │   │   ├── baseline_frequency.py             <-- Pattern 1: Frequency-Threshold Baseline (N >= 1)
 │   │   ├── statistical_ml.py                 <-- Pattern 2: Classical ML (TF-IDF + Naive Bayes + Buckets)
 │   │   ├── llm_hybrid.py                     <-- Pattern 3: Hybrid Semantic Schema-Bounded Extractor (Winner)
-│   │   └── ollama_llm.py                     <-- Pattern 4: Ollama Local Open-Weights LLM
 │   │
 │   ├── track2_intent_divergence/              <-- 2️⃣ SECONDARY TRACK: INTENT DIVERGENCE
 │   │   ├── __init__.py                        <-- Track 2 Package Init & Exports
@@ -43,7 +42,6 @@ Intent-Assignment/
     │   ├── PATTERN_1_BASELINE_FREQUENCY.md    <-- Baseline Heuristic Mechanics, Q&As & Failure Analysis
     │   ├── PATTERN_2_STATISTICAL_ML.md        <-- Classical ML Pattern Miner Deep-Dive
     │   ├── PATTERN_3_HYBRID_LLM.md            <-- Hybrid Semantic Model Deep-Dive & Calibration
-    │   └── PATTERN_4_OLLAMA_LLM.md            <-- Local Open-Weights LLM & Offline Fallback
     │
     ├── 02_SECONDARY_TRACK_INTENT_DIVERGENCE/  <-- Track 2 Dedicated Learning Guides
     │   ├── 01_SECONDARY_TRACK_OVERVIEW.md     <-- Triplet Comparison Pipeline Overview
@@ -67,7 +65,6 @@ Intent-Assignment/
   1. `FrequencyBaselineModel` ([`baseline_frequency.py`](file:///c:/Users/chint/Music/Intent%20Agent/src/track1_manifest_inference/baseline_frequency.py)): Frequency counting heuristic ($\text{count} \ge 1$).
   2. `StatisticalPatternModel` ([`statistical_ml.py`](file:///c:/Users/chint/Music/Intent%20Agent/src/track1_manifest_inference/statistical_ml.py)): TF-IDF + Naive Bayes + discrete limits + regex pattern induction.
   3. `LLMHybridManifestModel` ([`llm_hybrid.py`](file:///c:/Users/chint/Music/Intent%20Agent/src/track1_manifest_inference/llm_hybrid.py)): Schema-bounded domain ontology extractor (Recommended Winner).
-  4. `OllamaLLMManifestModel` ([`ollama_llm.py`](file:///c:/Users/chint/Music/Intent%20Agent/src/track1_manifest_inference/ollama_llm.py)): On-premise local open-weights LLM (`llama3`) via Ollama API.
 
 ---
 

@@ -77,3 +77,37 @@ Pattern 1 is the baseline heuristic model. It operates on the simple assumption 
 | **ECE Calibration Error** | 0.3875 | **FAILED (High Error)** |
 | **Inference Latency** | 0.01 ms | Fast |
 | **Compute / Token Cost** | $0.00 | Free |
+
+---
+
+## Plain-language summary: Pattern 1
+
+### How it works
+
+Pattern 1 is a **counting rule**, not a trained AI model. It looks only at tool calls that already happened in one trace. If a tool, resource, or action appears at least once, it adds it to the manifest. It ignores the user prompt and the agent's declared intent.
+
+Think of it as making a checklist from an agent's past actions:
+
+```text
+Observed: crm_report_tool.read was called twice
+Output:   allow crm_report_tool.read
+```
+
+### Pros
+
+- **Very simple:** no dataset, training, API key, or model download is required.
+- **Very fast:** it mainly counts values in a list.
+- **Easy to audit:** every granted tool comes directly from an observed call.
+- **Low cost:** it has no model-compute cost.
+
+### Cons
+
+- **Cannot plan ahead:** it cannot add a legitimate next-step tool that has not yet been observed.
+- **Does not understand language:** “retrieve a patient chart” and “read an EHR record” have no meaning to it.
+- **Weak constraints:** unknown identifiers become `.*`, which is a broad wildcard.
+- **Weak data policy:** it defaults to `INTERNAL`, so it can miss financial or health sensitivity.
+- **No learned confidence:** its fixed 0.50 confidence does not explain how reliable a field really is.
+
+### Best use
+
+Use Pattern 1 only as a baseline for comparison, or as a simple audit of already-observed activity. Do not use it alone to grant access for multi-step workflows.

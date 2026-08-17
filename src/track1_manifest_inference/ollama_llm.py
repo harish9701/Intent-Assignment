@@ -11,7 +11,7 @@ import urllib.error
 import re
 from typing import Dict, Any, List, Optional
 
-from src.track1_manifest_inference.llm_hybrid import DOMAIN_ENVELOPES
+from src.track1_manifest_inference.llm_hybrid import LLMHybridManifestModel
 
 OLLAMA_DEFAULT_URL = "http://localhost:11434/api/generate"
 OLLAMA_DEFAULT_MODEL = "llama3"
@@ -138,87 +138,7 @@ class OllamaLLMManifestModel:
         return None
 
     def _fallback_manifest_extraction(self, trace: Dict[str, Any]) -> Dict[str, Any]:
-        tool_calls = trace.get("tool_call_history", [])
-        prompt = trace.get("user_prompt", "").lower()
-        declared = trace.get("agent_declared_intent", "").lower()
-        domain_cat = trace.get("domain_category")
-
-        if not domain_cat or domain_cat not in DOMAIN_ENVELOPES:
-            domain_cat = self._infer_domain_category(prompt, declared, tool_calls)
-
-        envelope = DOMAIN_ENVELOPES.get(domain_cat, DOMAIN_ENVELOPES["customer_support_case_investigation"])
-
-        sel_tools = sorted(envelope["tools"])
-        sel_resources = sorted(envelope["resources"])
-        sel_actions = sorted(envelope["actions"])
-
-        max_rec_pred = envelope["maxRecords"]
-        has_pagination = any(c.get("parameters", {}).get("offset", 0) > 0 for c in tool_calls)
-
-        allowed_purposes = [domain_cat]
-        if domain_cat == "customer_support_case_investigation":
-            allowed_purposes.append("case_resolution")
-        elif domain_cat == "financial_payroll_auditing":
-            allowed_purposes.append("compliance_audit")
-        elif domain_cat == "healthcare_patient_record_retrieval":
-            allowed_purposes.append("medical_triage")
-        elif domain_cat == "security_log_analysis_threat_hunting":
-            allowed_purposes.append("incident_response")
-        elif domain_cat == "ecommerce_order_fulfillment":
-            allowed_purposes.append("inventory_management")
-        elif domain_cat == "devops_infrastructure_monitoring":
-            allowed_purposes.append("system_health_check")
-
-        conf_dict = {
-            "scope.tools": 0.95,
-            "scope.resources": 0.95,
-            "scope.actions": 0.95,
-            "constraints.maxRecords": 0.92,
-            "constraints.allowedCustomerIdPattern": 0.94,
-            "constraints.allowPagination": 0.95,
-            "allowedPurposes": 0.95,
-            "dataHandling.maxClassification": 0.95,
-            "dataHandling.allowExport": 0.95
-        }
-
-        return {
-            "intentManifestId": f"im_ollama_{trace.get('trace_id', '000')}",
-            "version": "1.0",
-            "agentId": trace.get("agent_id", "agt_unknown"),
-            "allowedPurposes": allowed_purposes,
-            "scope": {
-                "tools": sel_tools,
-                "resources": sel_resources,
-                "actions": sel_actions
-            },
-            "constraints": {
-                "maxRecords": max_rec_pred,
-                "allowedCustomerIdPattern": envelope["id_pattern"],
-                "allowPagination": has_pagination
-            },
-            "dataHandling": {
-                "maxClassification": envelope["maxClassification"],
-                "allowExport": envelope["allowExport"]
-            },
-            "validity": {
-                "validFrom": "2026-01-01T00:00:00Z",
-                "validTo": "2026-12-31T23:59:59Z"
-            },
-            "confidence_scores": conf_dict
-        }
-
-    def _infer_domain_category(self, prompt: str, declared: str, tool_calls: List[Dict[str, Any]]) -> str:
-        text = f"{prompt} {declared} " + " ".join([c.get("tool_name", "") for c in tool_calls])
-        text_l = text.lower()
-
-        if "patient" in text_l or "med" in text_l or "ehr" in text_l or "lab" in text_l:
-            return "healthcare_patient_record_retrieval"
-        elif "financial" in text_l or "ledger" in text_l or "payroll" in text_l or "tax" in text_l:
-            return "financial_payroll_auditing"
-        elif "siem" in text_l or "cloudtrail" in text_l or "vpc" in text_l or "log" in text_l:
-            return "security_log_analysis_threat_hunting"
-        elif "order" in text_l or "fulfillment" in text_l or "shipping" in text_l:
-            return "ecommerce_order_fulfillment"
-        elif "k8s" in text_l or "metric" in text_l or "alert" in text_l or "cluster" in text_l:
-            return "devops_infrastructure_monitoring"
-        return "customer_support_case_investigation"
+        """Use Pattern 3 as the single deterministic fallback for local inference."""
+        manifest = LLMHybridManifestModel().predict_manifest(trace)
+        manifest["intentManifestId"] = f"im_ollama_fallback_{trace.get('trace_id', '000')}"
+        return manifest

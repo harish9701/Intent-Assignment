@@ -92,9 +92,8 @@ To ensure scientific reproducibility, the dataset of 60 expert gold activity tra
 
 ## 🔬 Investigating Candidate Models in this Track
 
-We investigate 4 candidate models in `src/models/`:
+This learning guide focuses on the three locally runnable primary patterns:
 
 1. **Pattern 1 — Baseline Frequency Model** ([`src/models/baseline_frequency.py`](file:///c:/Users/chint/Music/Intent%20Agent/src/models/baseline_frequency.py)): Frequency threshold heuristic.
 2. **Pattern 2 — Statistical ML Miner** ([`src/models/statistical_ml.py`](file:///c:/Users/chint/Music/Intent%20Agent/src/models/statistical_ml.py)): TF-IDF + Naive Bayes + discrete limits + regex pattern induction.
 3. **Pattern 3 — Hybrid LLM Extractor** ([`src/models/llm_hybrid.py`](file:///c:/Users/chint/Music/Intent%20Agent/src/models/llm_hybrid.py)): Domain ontology schema graph + Bayesian calibration (Winner).
-4. **Pattern 4 — Ollama Local Open-Weights LLM** ([`src/models/ollama_llm.py`](file:///c:/Users/chint/Music/Intent%20Agent/src/models/ollama_llm.py)): On-premise local LLM (`llama3`) JSON extraction with offline fallback.

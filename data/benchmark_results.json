@@ -87,7 +87,7 @@
           "sample_count": 0
         }
       ],
-      "avg_latency_ms": 0.01,
+      "avg_latency_ms": 0.0,
       "cost_per_manifest_usd": 0.0
     },
     "Statistical_ML_Pattern_Miner": {
@@ -171,7 +171,7 @@
           "sample_count": 40
         }
       ],
-      "avg_latency_ms": 0.57,
+      "avg_latency_ms": 0.35,
       "cost_per_manifest_usd": 0.0
     },
     "LLM_Hybrid_Semantic_Extractor": {
@@ -255,7 +255,7 @@
           "sample_count": 80
         }
       ],
-      "avg_latency_ms": 0.01,
+      "avg_latency_ms": 0.0,
       "cost_per_manifest_usd": 0.0004
     },
     "Ollama_LLM_llama3": {
@@ -276,7 +276,7 @@
       "pagination_accuracy": 1.0,
       "purpose_accuracy": 1.0,
       "purpose_f1": 1.0,
-      "ece_calibration_error": 0.065,
+      "ece_calibration_error": 0.03,
       "reliability_curve": [
         {
           "bin_range": "0.0-0.1",
@@ -334,12 +334,12 @@
         },
         {
           "bin_range": "0.9-1.0",
-          "avg_confidence": 0.935,
+          "avg_confidence": 0.97,
           "avg_accuracy": 1.0,
           "sample_count": 80
         }
       ],
-      "avg_latency_ms": 4015.95,
+      "avg_latency_ms": 2026.45,
       "cost_per_manifest_usd": 0.0004
     }
   },

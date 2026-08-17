@@ -11,6 +11,34 @@
 Pattern 2 investigates classical machine learning and deterministic pattern induction techniques:
 > *"Can we combine TF-IDF feature extraction, probabilistic text classification, discrete limit quantiles, and regular expression pattern induction to infer authoritative Intent Manifests?"*
 
+## Plain-language summary: Pattern 2
+
+### How it works
+
+Pattern 2 has two parts. A trained **TF-IDF + Naive Bayes** classifier reads the user prompt and declared intent, then predicts the task's business purpose. Fixed rules inspect the observed tool calls to fill in the manifest scope, record limit, identifier pattern, pagination setting, and data classification.
+
+It is like teaching a small text classifier that “ledger” often means finance and “patient” often means healthcare, while still taking concrete permissions only from the trace.
+
+### Pros
+
+- **Learns from labelled examples:** it can recognise purpose from wording instead of only exact keywords.
+- **Fast and inexpensive:** TF-IDF and Naive Bayes run quickly on a CPU.
+- **Explainable:** you can inspect the input text, labels, vocabulary, and deterministic rules.
+- **No external service:** training and prediction can run locally.
+- **Safer separation of duties:** purpose is learned, while concrete scope is based on observed calls.
+
+### Cons
+
+- **Needs good labelled data:** incorrect, too-small, or unrepresentative examples lead to weak predictions.
+- **Limited language understanding:** it sees token patterns, not deep meaning; unfamiliar wording may be misclassified.
+- **Single-label purpose:** it trains only on the first allowed purpose, even when a task has several purposes.
+- **Rules need maintenance:** new resource types or ID formats require code/policy updates.
+- **Unknown ID fallback is broad:** `.*` should be replaced by a fail-closed rule in production.
+
+### Best use
+
+Use Pattern 2 when you have labelled historical traces, need a fast local baseline, and want to explain why the system predicted a purpose. It is a strong learning and baseline model, not a replacement for policy review.
+
 ---
 
 ## 📐 Mathematical Formulation & Core Equations
@@ -137,3 +165,129 @@ $$\hat{y} = \text{mode} \left\{ T_1(\mathbf{x}), T_2(\mathbf{x}), \dots, T_N(\ma
 | **Logistic Regression** | `LogisticRegressionPatternModel` | **0.6667** | **0.00%** | **85.00%** | **0.82 ms** |
 | **Linear Support Vector Machine** | `LinearSVCPatternModel` | **0.6667** | **0.00%** | **85.00%** | **0.75 ms** |
 | **Random Forest** | `RandomForestPatternModel` | **0.6667** | **0.00%** | **85.00%** | **3.40 ms** |
+
+---
+
+## Beginner guide: exactly how the dataset is used
+
+Pattern 2 is a **supervised classifier plus deterministic rules**. It learns only the task purpose from labelled examples. It does not learn the entire manifest from scratch.
+
+```text
+Training:   prompt + declared intent  ->  known purpose label
+Prediction: new prompt + declaration  ->  predicted purpose
+
+Observed tool calls -> scope, limits, identifier pattern, pagination, data policy
+```
+
+### One row in the dataset
+
+`data/eval_dataset/eval_traces_gold.json` is a JSON list. Each object is one agent trace, for example:
+
+```json
+{
+  "trace_id": "trace_001",
+  "agent_id": "agt_001",
+  "user_prompt": "Audit financial ledger entries for account CUST-10001",
+  "agent_declared_intent": "Executing financial payroll auditing...",
+  "domain_category": "financial_payroll_auditing",
+  "tool_call_history": [{"tool_name": "financial_ledger.query", "parameters": {"limit": 100}}],
+  "observed_summary": {},
+  "gold_manifest": {"allowedPurposes": ["financial_payroll_auditing"]}
+}
+```
+
+| Dataset field | Plain-English meaning | Current Pattern 2 use |
+| --- | --- | --- |
+| `trace_id` | Unique example number. | Used to name the generated manifest. |
+| `agent_id` | Agent that performed the task. | Copied to the generated manifest. |
+| `user_prompt` | The user's natural-language request. | **Classifier input.** |
+| `agent_declared_intent` | The agent's statement of what it plans to do. | **Classifier input.** |
+| `domain_category` | Domain supplied by the synthetic dataset. | Used only when the classifier has not been trained. |
+| `tool_call_history` | Every actual tool call. | Used by rules, not passed to Naive Bayes. |
+| `observed_summary` | Convenient summary of calls. | Not read by the current implementation. |
+| `gold_manifest` | Expert-approved expected answer. | Supplies the training label and held-out evaluation answer. |
+
+Each `tool_call_history` item contains these important fields:
+
+| Call field | Example | How it becomes manifest data |
+| --- | --- | --- |
+| `tool_name` | `crm_report_tool.read` | Added to `scope.tools`. |
+| `resource_arn` | `arn:aws:healthlake:...` | Added to `scope.resources`; keywords help set classification. |
+| `action` | `dynamodb:Query` | Added to `scope.actions`. |
+| `parameters.limit` | `100` | The highest observed value is rounded up to a policy bucket. |
+| ID parameters such as `customer_id` or `patient_id` | `MED-100001` | Matched to a known safe regex template. |
+| `parameters.offset` | `20` | A positive value enables pagination. |
+
+### Train/test split: do not let answers leak
+
+The benchmark has 60 traces. It trains on the first 20 and tests on the remaining 40:
+
+```python
+train_traces = gold_traces[:20]
+test_traces = gold_traces[20:]
+```
+
+Only the training traces give the model a gold label. During evaluation, the test trace's `gold_manifest` is kept away from `predict_manifest`; it is used only afterwards to score the prediction. In a larger project, shuffle first and use a stratified split so each purpose is represented in train and test sets.
+
+### The two values sent into training
+
+For every training trace, `fit(train_traces)` creates exactly this pair:
+
+```python
+text = trace["user_prompt"] + " " + trace["agent_declared_intent"]
+label = trace["gold_manifest"]["allowedPurposes"][0]
+```
+
+For the example above, the input text contains words such as `audit`, `financial`, and `ledger`; the label is `financial_payroll_auditing`. The first purpose only is used, so the current model is **single-label**, even if a gold manifest contains additional purposes.
+
+### TF-IDF: turning words into numbers
+
+`TfidfVectorizer` builds a vocabulary from the training text and turns each sentence into a numeric vector. Words that distinguish a topic receive more weight than words that appear in almost every example.
+
+```text
+Vocabulary: [ledger, patient, order]
+"audit ledger"     -> [0.82, 0.00, 0.00]
+"retrieve patient" -> [0.00, 0.91, 0.00]
+```
+
+The real vector contains all learned training tokens. A new trace uses the same learned vocabulary; it does not create new features while being predicted.
+
+### Naive Bayes: choosing the purpose
+
+`MultinomialNB` learns which weighted words are associated with each label. For a new TF-IDF vector, it scores every purpose seen in training and chooses the highest-scoring label. The word “naive” refers to its simplifying assumption that word features are independent once the purpose is known. It is fast and understandable, which is useful for this small dataset.
+
+### What happens after classification
+
+The classifier produces only `allowedPurposes`. The following fields come from deterministic inspection of the observed calls:
+
+| Manifest field | How it is generated |
+| --- | --- |
+| `scope.tools`, `scope.resources`, `scope.actions` | Unique values actually observed. |
+| `constraints.maxRecords` | Largest observed limit, rounded to a configured bucket. |
+| `constraints.allowedCustomerIdPattern` | First matching known ID template; defaults to `.*` when unknown. |
+| `constraints.allowPagination` | True when any call has `offset > 0`. |
+| `dataHandling` | Resource-keyword rules, for example healthcare resources map to `CONFIDENTIAL_PHI`. |
+
+This design makes the model easier to understand: text classification decides the business purpose, while the trace determines concrete permissions.
+
+### Minimal experiment
+
+```python
+import json
+from src.track1_manifest_inference.statistical_ml import StatisticalPatternModel
+
+with open("data/eval_dataset/eval_traces_gold.json", encoding="utf-8") as file:
+    traces = json.load(file)
+
+model = StatisticalPatternModel()
+model.fit(traces[:20])
+manifest = model.predict_manifest(traces[20])
+print(manifest["allowedPurposes"])
+```
+
+### Limitations to learn from
+
+- The dataset is small, so a different split can change results.
+- Confidence scores are fixed values; they are not calibrated probabilities from Naive Bayes.
+- `.*` is broad for an unknown identifier. A production system should fail closed or require review instead.
+- Add more traces, multi-label classification, stratified cross-validation, and calibrated probabilities to improve this baseline.

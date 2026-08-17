@@ -6,6 +6,8 @@ Key Features:
 - Multi-factor Bayesian confidence calibration engine for ultra-low ECE calibration error.
 - Exact constraint bucket optimization (maxRecords & regex patterns).
 """
+import json
+import os
 import re
 from typing import Dict, Any, List, Set, Tuple
 
@@ -91,10 +93,32 @@ DOMAIN_ENVELOPES = {
 }
 
 class LLMHybridManifestModel:
-    def __init__(self):
+    """Pattern 3 router for deterministic, local, or frontier extraction.
+
+    ``inference_provider`` on a trace may be ``deterministic``, ``local``, or
+    ``frontier``. The setting is operational configuration and is never inferred
+    from the user prompt.
+    """
+    def __init__(self, provider: str = "deterministic", frontier_model: str = "gpt-5.6"):
         self.name = "LLM_Hybrid_Semantic_Extractor"
+        self.provider = provider
+        self.frontier_model = frontier_model
 
     def predict_manifest(self, trace: Dict[str, Any]) -> Dict[str, Any]:
+        provider = str(trace.get("inference_provider", self.provider)).lower()
+        if provider == "local":
+            # Import lazily: Ollama uses this class for its deterministic fallback.
+            from src.track1_manifest_inference.ollama_llm import OllamaLLMManifestModel
+            return OllamaLLMManifestModel(
+                model_name=str(trace.get("local_model", "llama3"))
+            ).predict_manifest(trace)
+        if provider == "frontier":
+            manifest = self._frontier_manifest_extraction(trace)
+            if manifest is not None:
+                return manifest
+        return self._deterministic_manifest_extraction(trace)
+
+    def _deterministic_manifest_extraction(self, trace: Dict[str, Any]) -> Dict[str, Any]:
         tool_calls = trace.get("tool_call_history", [])
         prompt = trace.get("user_prompt", "").lower()
         declared = trace.get("agent_declared_intent", "").lower()
@@ -164,6 +188,70 @@ class LLMHybridManifestModel:
             "confidence_scores": conf_dict
         }
         return proposed_manifest
+
+    def _frontier_manifest_extraction(self, trace: Dict[str, Any]) -> Any:
+        """Use the OpenAI Responses API; return None on missing credentials or failure."""
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            return None
+        try:
+            from openai import OpenAI
+            response = OpenAI(api_key=api_key).responses.create(
+                model=str(trace.get("frontier_model", self.frontier_model)),
+                input=self._build_frontier_prompt(trace),
+                text={"format": {"type": "json_object"}},
+            )
+            return self._parse_model_manifest(response.output_text, trace, "frontier")
+        except Exception:
+            return None
+
+    def _build_frontier_prompt(self, trace: Dict[str, Any]) -> str:
+        payload = {
+            "task": "Return only a JSON Intent Manifest matching the requested fields.",
+            "user_prompt": trace.get("user_prompt", ""),
+            "agent_declared_intent": trace.get("agent_declared_intent", ""),
+            "observed_tool_calls": trace.get("tool_call_history", []),
+            "required_fields": {
+                "allowedPurposes": ["string"],
+                "scope": {"tools": ["string"], "resources": ["string"], "actions": ["string"]},
+                "constraints": {"maxRecords": "integer", "allowedCustomerIdPattern": "string", "allowPagination": "boolean"},
+                "dataHandling": {"maxClassification": "INTERNAL | RESTRICTED | CONFIDENTIAL_PHI", "allowExport": "boolean"},
+            },
+        }
+        return json.dumps(payload)
+
+    def _parse_model_manifest(self, raw_text: str, trace: Dict[str, Any], source: str) -> Any:
+        try:
+            parsed = json.loads(raw_text)
+            scope = parsed["scope"]
+            return {
+                "intentManifestId": f"im_{source}_{trace.get('trace_id', '000')}",
+                "version": "1.0",
+                "agentId": trace.get("agent_id", "agt_unknown"),
+                "allowedPurposes": list(parsed.get("allowedPurposes", ["general_query"])),
+                "scope": {
+                    "tools": sorted(scope.get("tools", [])),
+                    "resources": sorted(scope.get("resources", [])),
+                    "actions": sorted(scope.get("actions", [])),
+                },
+                "constraints": {
+                    "maxRecords": int(parsed.get("constraints", {}).get("maxRecords", 500)),
+                    "allowedCustomerIdPattern": str(parsed.get("constraints", {}).get("allowedCustomerIdPattern", ".*")),
+                    "allowPagination": bool(parsed.get("constraints", {}).get("allowPagination", False)),
+                },
+                "dataHandling": {
+                    "maxClassification": parsed.get("dataHandling", {}).get("maxClassification", "INTERNAL"),
+                    "allowExport": bool(parsed.get("dataHandling", {}).get("allowExport", False)),
+                },
+                "validity": {"validFrom": "2026-01-01T00:00:00Z", "validTo": "2026-12-31T23:59:59Z"},
+                "confidence_scores": {key: 0.95 for key in [
+                    "scope.tools", "scope.resources", "scope.actions", "constraints.maxRecords",
+                    "constraints.allowedCustomerIdPattern", "constraints.allowPagination", "allowedPurposes",
+                    "dataHandling.maxClassification", "dataHandling.allowExport",
+                ]},
+            }
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+            return None
 
     def _infer_domain_category(self, prompt: str, declared: str, tool_calls: List[Dict[str, Any]]) -> str:
         text = f"{prompt} {declared} " + " ".join([c.get("tool_name", "") for c in tool_calls])
